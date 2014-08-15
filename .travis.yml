@@ -7,7 +7,6 @@ os:
   - linux
   - osx
 
-
 env:
   matrix:
   - NODE_NVM_VERSION="0.10"
@@ -25,9 +24,7 @@ env:
 before_install:
 # upgrade libstdc++ to enable c++11 binary for node-mapnik
 # note: this is only needed on ubuntu precise and older
-- sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-- sudo apt-get update -q
-- sudo apt-get install -y libstdc++6
+- if [[ `uname -s` == 'Linux' ]]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; sudo apt-get update -q; sudo apt-get install -y libstdc++6; fi;
 - git clone https://github.com/creationix/nvm.git ../.nvm && source ../.nvm/nvm.sh
 - nvm install $NODE_NVM_VERSION
 - nvm use $NODE_NVM_VERSION
