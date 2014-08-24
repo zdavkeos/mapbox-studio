@@ -8,7 +8,7 @@ var getport = require('getport');
 // increase the libuv threadpool size to 1.5x the number of logical CPUs.
 process.env.UV_THREADPOOL_SIZE = Math.ceil(Math.max(4, require('os').cpus().length * 1.5));
 
-process.title = 'tm2';
+process.title = 'mapbox-studio';
 
 if (process.platform === 'win32') {
     // HOME is undefined on windows
@@ -20,8 +20,6 @@ if (process.platform === 'win32') {
 var tm = require('./lib/tm');
 var server;
 var config = require('minimist')(process.argv.slice(2));
-config.db = config.db || path.join(process.env.HOME, '.tilemill', 'v2', 'app.db');
-config.mapboxauth = config.mapboxauth || 'https://api.mapbox.com';
 config.shell = config.shell || false;
 config.port = config.port || undefined;
 config.test = config.test || false;

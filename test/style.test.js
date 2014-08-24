@@ -12,7 +12,7 @@ var mockOauth = require('../lib/mapbox-mock')(require('express')());
 var Vector = require('tilelive-vector');
 var testutil = require('./util');
 var UPDATE = !!process.env.UPDATE;
-var tmp = require('os').tmpdir();
+var tmp = tm.join(require('os').tmpdir(), 'mapbox-studio');
 var creds = {
     account: 'test',
     accesstoken: 'testaccesstoken'
@@ -20,10 +20,11 @@ var creds = {
 
 var server;
 var localstyle = 'tmstyle://' + tm.join(__dirname, 'fixtures-localstyle');
-var tmppath = tm.join(tmp, 'tm2-styleTest-' + (+new Date));
+var tmppath = tm.join(tmp, 'styleTest-' + (+new Date));
 
 test('setup: config', function(t) {
     tm.config({
+        log: false,
         db: path.join(tmppath, 'app.db'),
         fonts: path.join(tmppath, 'fonts'),
         cache: path.join(tmppath, 'cache')
@@ -68,6 +69,17 @@ test('saves style (invalid)', function(t) {
         });
     });
 });
+
+test('saves style (invalid bookmarks)', function(t) {
+    testutil.createTmpProject('style-save', localstyle, function(err, tmpid, data) {
+        t.ifError(err);
+        style.save(_({id:style.tmpid(),_bookmarks:'asdf'}).defaults(data), function(err, source) {
+            assert.equal(err.toString(), 'Error: bookmarks must be an array', 'style.save() errors on invalid style');
+            t.end();
+        });
+    });
+});
+
 
 test('saves style to disk', function(t) {
     testutil.createTmpProject('style-save', localstyle, function(err, tmpid, data) {
@@ -203,10 +215,36 @@ test('style.info: reads style YML (tmp)', function(t) {
     });
 });
 
+test('style.info: reads style YML (bookmarks)', function(t) {
+    style.info(localstyle, function(err, info) {
+        t.ifError(err);
+        t.equal(info.id, localstyle, 'style.info adds id key');
+        t.equal(info._tmp, false, 'style info adds _tmp=false');
+
+        var basepath = tm.parse(localstyle).dirname;
+        info.id = info.id.replace(basepath, '[BASEPATH]');
+
+        var filepath = path.join(__dirname,'expected','style-info-bookmarks.json');
+        if (UPDATE) {
+            fs.writeFileSync(filepath, JSON.stringify(info, null, 2));
+        }
+        t.deepEqual(info, require(filepath));
+        t.end();
+    });
+});
+
 test('style.info: invalid yaml (non-object)', function(t) {
     style.info('tmstyle://' + path.join(__dirname,'fixtures-invalid-nonobj'), function(err, source) {
         t.ok(err);
         t.ok(/^Error: Invalid YAML/.test(err.toString()));
+        t.end();
+    });
+});
+
+test('style.info: invalid bookmarks', function(t) {
+    style.info('tmstyle://' + path.join(__dirname,'fixtures-invalid-badbookmarks'), function(err, source) {
+        t.ok(err);
+        t.ok(/^JS-YAML: end of the stream or a document separator is expected/.test(err.toString()));
         t.end();
     });
 });
@@ -297,6 +335,22 @@ test('style.toXML: compiles data params', function(t) {
     });
 });
 
+test('style.toXML: compiles raster', function(t) {
+    style.toXML({
+        id:'tmstyle:///tmp-1234',
+        source:'mapbox:///mapbox.satellite',
+        styles:{'style.mss': '#_image { raster-opacity:1; }'}
+    }, function(err, xml) {
+        t.ifError(err);
+        t.ok(/<Map srs/.test(xml));
+        t.ok(/<Layer name="_image"/.test(xml), 'includes _image layer');
+        t.ok(/<Style name="_image"/.test(xml), 'includes style for _image layer');
+        t.ok(/<RasterSymbolizer opacity="1"/.test(xml), 'includes raster opacity');
+        t.ok(/<Parameter name="source"><\!\[CDATA\[mapbox:\/\/\/mapbox.satellite\]\]>/.test(xml));
+        t.end();
+    });
+});
+
 test('style.upload: uploads stylesheet', function(t) {
     var id = 'tmstyle://' + __dirname + '/fixtures-upload';
     var cache = path.join(tmppath, 'cache');
@@ -317,12 +371,6 @@ test('style.upload: errors on unsaved id', function(t) {
 });
 
 test('cleanup', function(t) {
-    testutil.cleanup();
-    try { fs.unlinkSync(path.join(tmppath, 'app.db')); } catch(err) {}
-    try { fs.rmdirSync(path.join(tmppath, 'cache')); } catch(err) {}
-    try { fs.rmdirSync(tmppath); } catch(err) {}
-    server.close(function() {
-        t.end();
-    });
+    server.close(function() { t.end(); });
 });
 

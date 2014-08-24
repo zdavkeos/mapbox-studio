@@ -64,6 +64,8 @@ rm -rf $app_dir/.git
 ver=$(node -e "var fs = require('fs'); console.log(JSON.parse(fs.readFileSync('$app_dir/package.json')).version);")
 echo $ver > $build_dir/version
 cp $app_dir/LICENSE.md $build_dir/LICENSE
+mv $build_dir/version $build_dir/version.txt
+mv $build_dir/LICENSE $build_dir/LICENSE.txt
 
 BUILD_PLATFORM=$platform npm install --production
 
@@ -147,6 +149,13 @@ else
     aws s3 cp --acl=public-read $build_dir.zip s3://mapbox/mapbox-studio/
     echo "Build at https://mapbox.s3.amazonaws.com/mapbox-studio/$(basename $build_dir.zip)"
     rm -f $build_dir.zip
+fi
+
+if [ "$ver" ==  "$(echo $gitsha | tr -d v)" ]; then
+    echo $ver > latest
+    aws s3 cp --acl=public-read latest s3://mapbox/mapbox-studio/latest
+    rm -f latest
+    echo "Latest build version at https://mapbox.s3.amazonaws.com/mapbox-studio/latest"
 fi
 
 cd $cwd

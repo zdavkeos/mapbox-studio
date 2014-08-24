@@ -12,16 +12,15 @@ var middleware = require('../lib/middleware');
 var style = require('../lib/style');
 var source = require('../lib/source');
 var mockOauth = require('../lib/mapbox-mock')(require('express')());
-var tmp = os.tmpdir();
-var tmppath = tm.join(tmp, 'tm2-middleware-' + (+new Date));
-
-var tmpId = tm.join(tmp, 'tm2-middlewareProject-' + (+new Date));
+var tmppath = tm.join(os.tmpdir(), 'mapbox-studio', 'middleware-' + (+new Date));
+var tmpId = tm.join(os.tmpdir(), 'mapbox-studio', 'middlewareProject-' + (+new Date));
 var sourceId = 'tmsource://' + tm.join(path.resolve(__dirname), 'fixtures-localsource');
 var styleId = 'tmstyle://' + tm.join(path.resolve(__dirname), 'fixtures-localsource');
 var server;
 
 test('setup: config', function(t) {
     tm.config({
+        log: false,
         db: path.join(tmppath, 'app.db'),
         cache: path.join(tmppath, 'cache'),
         fonts: path.join(tmppath, 'fonts'),
@@ -127,16 +126,6 @@ test('writeStyle: makes persistent styles', function(t) {
     });
 });
 
-test('writeStyle: cleanup', function(t) {
-    setTimeout(function() {
-        ['project.xml','project.yml','a.mss','.thumb.png'].forEach(function(file) {
-            try { fs.unlinkSync(path.join(tmpId,file)) } catch(err) {};
-        });
-        try { fs.rmdirSync(tmpId) } catch(err) {};
-        t.end();
-    }, 250);
-});
-
 test('loadStyle: loads a tmp style', function(t) {
     var req = { query: { id:'tmpstyle://' + tm.parse(styleId).dirname } };
     middleware.loadStyle(req, {}, function(err) {
@@ -171,7 +160,7 @@ test('newStyle: creates a tmp style with a raster source', function(t) {
     middleware.newStyle(req, {}, function(err) {
         t.ifError(err);
         t.deepEqual({
-            'style.mss': 'Map {\n  background-color: #fff;\n}\n\n#raster_local {\n  raster-opacity: 1;\n}\n\n'
+            'style.mss': 'Map {\n  background-color: #fff;\n}\n\n#_image {\n  raster-opacity: 1;\n}\n\n'
         }, req.style.data.styles, 'creates default styles');
         t.equal(sourceId, req.style.data.source, 'sets source from input param');
         t.ok(style.tmpid(req.style.data.id));
@@ -250,16 +239,6 @@ test('writeSource: makes persistent sources', function(t) {
         t.deepEqual(s.data, data, 'has the right data');
         t.end();
     });
-});
-
-test('writeSource: cleanup', function(t) {
-    setTimeout(function() {
-        ['data.xml', 'data.yml'].forEach(function(file) {
-            try { fs.unlinkSync(path.join(tmpId,file)) } catch(err) {};
-        });
-        try { fs.rmdirSync(tmpId) } catch(err) {};
-        t.end();
-    }, 250);
 });
 
 test('loadSource: loads a tmp source', function(t) {
@@ -367,10 +346,5 @@ test('cleanup', function(t) {
     tm.db.rm('oauth');
     tm.history(sourceId, true);
     tm.history(styleId, true);
-    try { fs.unlinkSync(path.join(tmppath, 'app.db')); } catch(err) {}
-    try { fs.rmdirSync(path.join(tmppath, 'cache')); } catch(err) {}
-    try { fs.rmdirSync(tmppath); } catch(err) {}
-    server.close(function() {
-        t.end();
-    });
+    server.close(function() { t.end(); });
 });
