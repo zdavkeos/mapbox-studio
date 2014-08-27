@@ -252,6 +252,7 @@ for (var name in datatests) (function(name, info) {
         $('.js-addlayer').click();
         t.equal($('#addlayer').size(), 1, 'shows #addlayer modal');
         $('#addlayer input[name=Datasource-file]').val(window.testParams.dataPath + info.filepath);
+        t.equal($('#addlayer input[name=Datasource-file]').get(0).validity.valid, true);
         $('#addlayer').submit();
         onajax(function() {
             t.equal($('#layers-' + info.expected.id).size(), 1, 'adds #layers-' + info.expected.id + ' form');
@@ -275,6 +276,16 @@ for (var name in datatests) (function(name, info) {
     });
 })(name, datatests[name]);
 
+tape('#addlayer: filename valid with spaces', function(t) {
+    $('.js-addlayer').click();
+    t.equal($('#addlayer').size(), 1, 'shows #addlayer modal');
+    $('#addlayer input[name=Datasource-file]').val(window.testParams.dataPath + '/file with spaces.geojson');
+    t.equal($('#addlayer input[name=Datasource-file]').get(0).validity.valid, true);
+    $('#addlayer a.close').click();
+    t.equal($('#addlayer').size(), 0, 'hides #addlayer modal');
+    t.end();
+});
+
 tape('keybindings', function(t) {
     window.location.hash = '#';
 
@@ -287,21 +298,9 @@ tape('keybindings', function(t) {
 
     e = $.Event('keydown');
     e.ctrlKey = true;
-    e.which = 72; // h
-    $('body').trigger(e);
-    t.equal(window.location.hash, '#docs', 'ctrl+h => #help');
-
-    e = $.Event('keydown');
-    e.ctrlKey = true;
     e.which = 220; // backslash
     $('body').trigger(e);
     t.equal(window.location.hash, '#settings', 'ctrl+\\ => #settings');
-
-    e = $.Event('keydown');
-    e.ctrlKey = true;
-    e.which = 66; // backslash
-    $('body').trigger(e);
-    t.equal(window.location.hash, '#bookmark', 'ctrl+b => #bookmark');
 
     t.end();
 });
