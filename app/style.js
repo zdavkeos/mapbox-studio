@@ -9,10 +9,10 @@ var gridc;
 var bookmarks = style._bookmarks;
 var mtime = (+new Date).toString(36);
 var placeentry = '<div class="col4 places-entry-container animate">' +
-                    '<div id="place-sentry-<%= index %>" lat="<%= center[0] %>" lng="<%= center[1] %>" zoom="<%=zoom %>" class="js-places-entry places-entry"></div>' +
-                    '<a href="#" class="z1 block entry-label fill-lighten3 dark pin-bottom pin-top js-place-jump">' +
-                    '<p class="pad1x pad0y"><% _.each(tags, function(currenttag) { %> <span class="js-placetag placetag pad0x micro strong fill-dark" tag="<%= currenttag %>"><%= currenttag %></span> <% }); %></p>' +
-                    '<small class="pad1x pad0y pin-bottom strong"><%= place_name %></small>' +    
+                    '<div id="place-sentry-<%= index %>" lat="<%= center[0] %>" lng="<%= center[1] %>" zoom="<%=zoom %>" class="js-places-entry pin-left col12 places-entry"></div>' +
+                    '<a href="#" class="z1 block entry-label fill-darken2 dark pin-bottom pin-top js-place-jump">' +
+                    '<div class="pad1 prose pin-bottom"><% _.each(tags, function(currenttag) { %> <span class="js-placetag fill-lighten0 pad0 placetag round micro strong" tag="<%= currenttag %>"><%= currenttag %></span> <% }); %></div>' +
+                    '<div class="pad1 pin-top strong"><%= place_name %></div>' +
                     '<% if (!tags.indexOf("userbookmark")) { %><a href="#" index="<%= index %>" class="js-del-bookmark zoomedto-close icon trash pin-topright pad1"></a><% }; %>' +
                   '</div>';
 
@@ -191,7 +191,7 @@ Editor.prototype.renderPlaces = function(filter) {
   }
 
   // Print template
-  
+
 
   $('#placeslist').html(_.map(filtered, function(d, i) {
     d.index = i;
