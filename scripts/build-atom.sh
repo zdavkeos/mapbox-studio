@@ -189,6 +189,9 @@ elif [ $platform == "darwin" ]; then
     # Sign .app file.
     codesign --keychain ~/Library/Keychains/signing.keychain --sign "Developer ID Application: Mapbox, Inc." --deep --verbose --force "$build_dir/Mapbox Studio.app"
 
+    # Verify.
+    codesign --verify --deep --verbose=2 "$build_dir/Mapbox Studio.app"
+
     # Nuke signin keychain.
     security delete-keychain signing.keychain
 
